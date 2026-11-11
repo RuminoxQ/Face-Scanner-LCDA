@@ -94,6 +94,7 @@ button{font-family:inherit}
 @keyframes silkIn{from{opacity:0}to{opacity:1}}
 #silk .stripes{position:absolute;left:-20%;top:-20%;width:140%;height:140%;background:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 46px,rgba(255,255,255,.34) 46px 84px,rgba(22,163,74,.07) 84px 150px,rgba(255,255,255,0) 150px 210px);-webkit-mask-image:radial-gradient(75% 75% at 50% 50%,#000,transparent);mask-image:radial-gradient(75% 75% at 50% 50%,#000,transparent);animation:stripeDrift 14s linear infinite}
 @keyframes stripeDrift{from{transform:translateX(0)}to{transform:translateX(210px)}}
+#birds{position:absolute;top:0;left:0;width:100%;height:100%;display:block;pointer-events:none}
 #ribbons{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
 #reveal{color:#14532D}
 .center{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.6vh;padding:24px 24px 14vh;text-align:center}
@@ -125,6 +126,7 @@ button{font-family:inherit}
 <section id="silk" class="layer" aria-hidden="true">
 <div class="stripes"></div>
 <canvas id="ribbons"></canvas>
+<canvas id="birds"></canvas>
 </section>
 
 
@@ -263,7 +265,7 @@ button{font-family:inherit}
   ]);
   /* ---------- silk ribbons (canvas) ---------- */
   var Ribbons = (function () {
-    var cv = $('ribbons'), cx = cv.getContext('2d'), W = 0, H = 0, raf = 0, t0 = 0, mode = 'ambient', ph0 = 0, last = 0;
+    var cv = $('ribbons'), cx = cv.getContext('2d'), W = 0, H = 0, raf = 0, t0 = 0, mode = 'ambient', ph0 = 0, last = 0, warpLift = 0, warpTilt = 0;
     var PAL = ['#14532D', '#166534', '#15803D', '#16A34A', '#22C55E', '#4ADE80', '#86EFAC', '#065F46', '#A3E635', '#BEF264', '#0F766E'];
     function hex(h) { return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
     var R = [], N = 15, i;
@@ -328,7 +330,9 @@ button{font-family:inherit}
         }
         var P = function (c, sd, hw) {
           var x = c[0] + sd[0] * hw, y = c[1] + sd[1] * hw, z = c[2] + sd[2] * hw, f = D / (D + z);
-          return [W / 2 + x * unit * f, H / 2 + oy * H + y * unit * f * ysc, z];
+          var sx = W / 2 + x * unit * f, sy = H / 2 + oy * H + y * unit * f * ysc, nx = (sx - W / 2) / (W / 2);
+          sy -= H * (warpLift * nx * nx + warpTilt * nx);
+          return [sx, sy, z];
         };
         for (k = 0; k < M; k++) {
           var e = (k + .5) / M, hw = r.w * S * Math.pow(Math.sin(Math.PI * e), .8) * .5;
@@ -359,6 +363,7 @@ button{font-family:inherit}
     function frame(now) {
       var el = (now - t0) / 1000, dt = Math.min(.05, (now - last) / 1000), S, ysc = 1, oy = 0, al = 1, spin = 1, bl = 0;
       last = now;
+      warpLift = warpTilt = 0;
       if (mode === 'ambient') {
         S = 1.1; ysc = .85; al = .3 * Math.min(1, el / 1); spin = .5;
         ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 90, 7);
@@ -369,7 +374,7 @@ button{font-family:inherit}
         ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 130); bloom(bl, Math.max(W, H) * (.3 + .5 * bl));
       } else {
         var b = ease(el / 1.5);
-        S = .14 + (1.18 - .14) * b; ysc = 1 - .64 * b; oy = .31 * b; al = .35 + .65 * (1 - b) + .1 * b;
+        S = .14 + (1.18 - .14) * b; ysc = 1 - .5 * b; oy = .34 * b; warpLift = .3 * b; warpTilt = .1 * b; al = .35 + .65 * (1 - b) + .1 * b;
         ph0 += dt; draw(ph0, S, ysc, oy, Math.min(1, al), 1, 130);
         bloom(1 - Math.min(1, el / .8), Math.max(W, H) * .8);
       }
@@ -381,7 +386,66 @@ button{font-family:inherit}
       stop: function () { if (raf) cancelAnimationFrame(raf); raf = 0; }
     };
   })();
-  window.addEventListener('resize', function () { Ribbons.resize(); });
+  /* ---------- birds (canvas) ---------- */
+  var Birds = (function () {
+    var cv = $('birds'), cx = cv.getContext('2d'), W = 0, H = 0, raf = 0, t0 = 0;
+    var flocks = [];
+    function mk(n, delay, scale, y0, speed) {
+      var b = [];
+      for (var i = 0; i < n; i++) {
+        var row = Math.ceil(i / 2), side = i % 2 ? 1 : -1;
+        b.push({ dx: -row * .045 * scale, dy: side * row * .028 * scale * (i ? 1 : 0), ph: rnd(i + delay * 7) * 6.28, f: 5 + rnd(i + 13) * 2.5, s: scale * (.9 + rnd(i + 3) * .2) });
+      }
+      flocks.push({ b: b, delay: delay, y0: y0, speed: speed, scale: scale });
+    }
+    mk(9, .4, 1, .4, 1 / 11);
+    mk(5, 5, .62, .3, 1 / 14);
+    mk(3, 9, .45, .5, 1 / 16);
+    function resize() {
+      var d = Math.min(window.devicePixelRatio || 1, 2);
+      W = cv.clientWidth; H = cv.clientHeight;
+      cv.width = Math.round(W * d); cv.height = Math.round(H * d);
+      cx.setTransform(d, 0, 0, d, 0, 0);
+    }
+    function bird(x, y, s, flap, a) {
+      var w = flap;                       // -1 (wings up) .. 1 (wings down)
+      cx.globalAlpha = a;
+      cx.save(); cx.translate(x, y);
+      cx.beginPath();
+      cx.moveTo(-s, -s * .1 - s * .55 * w);
+      cx.quadraticCurveTo(-s * .5, -s * .5 - s * .15 * w, 0, 0);
+      cx.quadraticCurveTo(s * .5, -s * .5 - s * .15 * w, s, -s * .1 - s * .55 * w);
+      cx.stroke(); cx.restore();
+    }
+    function frame(now) {
+      var t = (now - t0) / 1000;
+      cx.clearRect(0, 0, W, H);
+      cx.strokeStyle = '#14532D'; cx.lineCap = 'round'; cx.lineJoin = 'round';
+      flocks.forEach(function (f) {
+        var u = ((t - f.delay) * f.speed);
+        if (u < 0) return;
+        u = u % 1.25;                                   // pause off-screen between passes
+        var fade = Math.min(1, t / 1.5);
+        for (var i = 0; i < f.b.length; i++) {
+          var b = f.b[i], ux = u - b.dx * .6;
+          var x = (-0.12 + ux * 1.3) * W;
+          var y = H * (f.y0 - .2 * ux + .035 * Math.sin(ux * 7 + b.ph * .3)) + b.dy * H + Math.sin(t * 1.6 + b.ph) * H * .006;
+          if (x < -40 || x > W + 40) continue;
+          var s = b.s * H * .03;
+          cx.lineWidth = Math.max(1.4, s * .16);
+          bird(x, y, s, Math.sin(t * b.f + b.ph), .8 * fade);
+        }
+      });
+      cx.globalAlpha = 1;
+      raf = requestAnimationFrame(frame);
+    }
+    return {
+      start: function () { resize(); t0 = performance.now(); if (!raf) raf = requestAnimationFrame(frame); },
+      resize: resize,
+      stop: function () { if (raf) cancelAnimationFrame(raf); raf = 0; cx.clearRect(0, 0, W || 1, H || 1); }
+    };
+  })();
+  window.addEventListener('resize', function () { Ribbons.resize(); Birds.resize(); });
   Ribbons.start('ambient');
 
   (function fireflies() {
@@ -556,7 +620,7 @@ button{font-family:inherit}
     var p = 0;
     $('launchFill').style.width = '0%'; $('launchPct').textContent = '0';
     setStage('reveal');
-    Ribbons.start('reveal');
+    Ribbons.start('reveal'); Birds.start();
     timers.launch = setInterval(function () {
       p = Math.min(100, p + 0.9);
       $('launchFill').style.width = p + '%';
@@ -570,7 +634,7 @@ button{font-family:inherit}
   }
 
   function reset() {
-    clearAll(); Ribbons.start('ambient');
+    clearAll(); Ribbons.start('ambient'); Birds.stop();
     var c = dots.getContext('2d'); c.clearRect(0, 0, dots.width, dots.height);
     progress = 0; setRing(0); demo = false; app.setAttribute('data-demo', '0');
     setStage('idle');
