@@ -51,11 +51,8 @@ button{font-family:inherit}
 .firefly{display:none;position:absolute;border-radius:50%;background:#BEF264;box-shadow:0 0 12px 4px rgba(190,242,100,.55);opacity:0;animation:dcFloat 10s ease-in-out infinite both}
 
 /* ---------- scanner scene ---------- */
-#scene{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;padding:0 4vw 32vh}
-.scanner{--s:min(56vh,90vw,620px);position:relative;width:var(--s);height:var(--s)}
-.pulse{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;border:2px solid rgba(21,128,61,.55);animation:dcRingOut 3.2s ease-out infinite;display:none}
-.pulse.p2{animation-delay:1.6s}
-[data-stage=idle] .pulse,[data-stage=starting] .pulse,[data-stage=position] .pulse{display:block}
+#scene{position:absolute;top:0;left:0;right:0;bottom:0;display:flex;align-items:center;justify-content:center;padding:0 4vw 13vh}
+.scanner{--s:min(64vh,92vw,720px);position:relative;width:var(--s);height:var(--s)}
 .disc{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;overflow:hidden;background:radial-gradient(closest-side,#F6FDF8,#D3F0DD);box-shadow:0 0 0 8px rgba(255,255,255,.75),0 22px 60px rgba(20,83,45,.28);transform:translateZ(0);-webkit-mask-image:-webkit-radial-gradient(white,black)}
 #video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0;transition:opacity .25s}
 [data-stage=position] #video,[data-stage=countdown] #video,[data-stage=scanning] #video{opacity:1}
@@ -66,10 +63,6 @@ button{font-family:inherit}
 [data-demo="1"][data-stage=position] .silhouette,[data-demo="1"][data-stage=countdown] .silhouette,[data-demo="1"][data-stage=scanning] .silhouette{display:block}
 .scanline{position:absolute;left:0;right:0;height:3px;background:#BBF7D0;box-shadow:0 0 24px 8px rgba(134,239,172,.55);animation:dcScan 1.6s ease-in-out infinite;display:none}
 [data-stage=scanning] .scanline{display:block}
-.faceguide{position:absolute;left:50%;top:50%;height:66%;transform:translate(-50%,-50%);display:none;overflow:visible}
-.faceguide ellipse{fill:none;stroke:rgba(255,255,255,.7);stroke-width:1.2;stroke-dasharray:4 3;transition:stroke .2s}
-.faceguide.ok ellipse{stroke:var(--accent);stroke-width:2;stroke-dasharray:none}
-[data-stage=position] .faceguide,[data-stage=countdown] .faceguide{display:block}
 .count{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,.38);display:none;align-items:center;justify-content:center}
 [data-stage=countdown] .count{display:flex}
 .count span{font-family:'Sora',sans-serif;font-weight:800;line-height:1;font-size:calc(var(--s)*.5);color:#14532D;text-shadow:0 0 30px rgba(255,255,255,.8)}
@@ -77,13 +70,14 @@ button{font-family:inherit}
 .count span.pop{animation:dcPop .55s ease-out both}
 
 .ring{position:absolute;left:-5%;top:-5%;width:110%;height:110%;overflow:visible;transform:rotate(-90deg);opacity:0;filter:drop-shadow(0 0 6px rgba(22,163,74,.45));transition:opacity .25s}
-[data-stage=scanning] .ring,[data-stage=granted] .ring{opacity:1}
+[data-stage=position] .ring,[data-stage=countdown] .ring,[data-stage=scanning] .ring,[data-stage=granted] .ring{opacity:1}
+.ring circle:first-child{transition:stroke .2s}
+.scanner.has .ring circle:first-child{stroke:rgba(22,163,74,.8)}
+.scanner.paused .ring,.scanner.paused .count span{opacity:.4}
 .ring .fill{stroke:var(--accent);transition:stroke-dashoffset .12s linear}
 [data-stage=granted] .ring{filter:drop-shadow(0 0 16px rgba(22,163,74,.6))}
 [data-stage=granted] .ring .fill{stroke:#14532D}
 [data-stage=granted] .disc{background:#052712}
-.orbit{position:absolute;left:-5%;top:-5%;width:110%;height:110%;overflow:visible;display:none;animation:dcSpin 1.6s linear infinite}
-[data-stage=position] .orbit{display:block}
 .check{position:absolute;right:2%;bottom:8%;width:20%;height:20%;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;box-shadow:0 0 0 6px #fff}
 [data-stage=granted] .check{display:flex;animation:dcPop .55s ease-out both}
 .check svg{width:56%;height:56%}
@@ -129,7 +123,7 @@ button{font-family:inherit}
 #fs.on .ico-in{display:none}
 #fs.on .ico-out{display:block}
 
-@media (prefers-reduced-motion: reduce){.pulse,.scanline,.orbit,.firefly,.shield .r1,.shield .r2{animation:none}}
+@media (prefers-reduced-motion: reduce){.scanline,.firefly,.shield .r1,.shield .r2{animation:none}}
 </style>
 </head>
 <body>
@@ -155,15 +149,12 @@ button{font-family:inherit}
 
 <main id="scene">
 <div class="scanner">
-<div class="pulse"></div>
-<div class="pulse p2"></div>
 
 <div class="disc">
 <video id="video" playsinline muted autoplay></video>
 <svg class="silhouette" viewBox="0 0 400 400" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><circle cx="200" cy="170" r="78" fill="#14532D"/><path d="M40 420c0-90 70-140 160-140s160 50 160 140z" fill="#14532D"/></svg>
 <canvas id="dots" width="440" height="440"></canvas>
 <div class="scanline"></div>
-<svg id="faceguide" class="faceguide" viewBox="0 0 100 130" aria-hidden="true"><ellipse cx="50" cy="65" rx="46" ry="62"/></svg>
 <div class="count"><span id="countNum">3</span></div>
 </div>
 
@@ -171,7 +162,6 @@ button{font-family:inherit}
 <circle cx="50" cy="50" r="48" fill="none" stroke="rgba(20,83,45,.16)" stroke-width="1.6"/>
 <circle id="ringFill" class="fill" cx="50" cy="50" r="48" fill="none" stroke-width="2.4" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
 </svg>
-<svg class="orbit" viewBox="0 0 100 100" aria-hidden="true"><circle cx="50" cy="50" r="48" fill="none" stroke="#16A34A" stroke-width="1.8" stroke-dasharray="26 275" stroke-linecap="round"/></svg>
 
 <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
 
@@ -219,22 +209,23 @@ button{font-family:inherit}
 
   /* ---- settings you can tune ---- */
   var CFG = {
-    holdMs: 700,        // face must stay in frame this long before the countdown starts
-    countFrom: 3,       // countdown length in seconds
-    scanMs: 3000,       // scan duration
-    lostGraceMs: 600,   // countdown cancels if the face is gone this long
-    lostResetMs: 2500,  // scan restarts from the top if the face is gone this long
+    holdMs: 300,        // a face must be present this long before the countdown starts
+    countFrom: 2,       // countdown length in seconds (only ticks while a face is present)
+    scanMs: 2000,       // scan duration (only advances while a face is present)
+    presentMs: 900,     // a face counts as present for this long after it was last seen
+    resetMs: 3000,      // go back to the start if no face is seen for this long mid-scan
     detectEveryMs: 100, // how often to look for a face
-    minFace: 0.28,      // face size limits, as a share of the circle
-    maxFace: 0.72
+    minFace: 0.12,      // face size limits, as a share of the circle (very forgiving)
+    maxFace: 1.4
   };
 
+
   var $ = function (id) { return document.getElementById(id); };
-  var app = $('app'), video = $('video'), dots = $('dots');
+  var scanner = document.querySelector('.scanner'), app = $('app'), video = $('video'), dots = $('dots');
   var timers = {};
   var stage = 'idle', demo = false, stream = null;
   var progress = 0;
-  var faceOK = false, okSince = 0, lostSince = 0, detecting = false, modelPromise = null, detectOpts = null;
+  var faceOK = false, okSince = 0, lostSince = 0, lastSeen = 0, hereSince = 0, manual = false, detecting = false, modelPromise = null, detectOpts = null;
 
   /* ---------- helpers ---------- */
   function rnd(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
@@ -438,33 +429,36 @@ button{font-family:inherit}
       try { await faceapi.tf.setBackend('webgl'); } catch (e) {}
       await faceapi.tf.ready();
       await faceapi.nets.tinyFaceDetector.loadFromUri('vendor/model');
-      detectOpts = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.45 });
+      detectOpts = new faceapi.TinyFaceDetectorOptions({ inputSize: 320, scoreThreshold: 0.35 });
     })();
     modelPromise.catch(function () { modelPromise = null; });
     return modelPromise;
   }
 
-  // Is the face fully inside the circle, centred, and a sensible size?
+  // Forgiving test: a face is "here" if its centre is anywhere inside the circle and it is not tiny.
   function inFrame(box) {
     if (!box) return false;
     var vw = video.videoWidth, vh = video.videoHeight;
     if (!vw || !vh) return false;
     var side = Math.min(vw, vh), sx = (vw - side) / 2, sy = (vh - side) / 2;
-    var x1 = (box.x - sx) / side, y1 = (box.y - sy) / side;
-    var x2 = (box.x + box.width - sx) / side, y2 = (box.y + box.height - sy) / side;
-    var cx = (x1 + x2) / 2, cy = (y1 + y2) / 2, size = Math.max(x2 - x1, y2 - y1);
-    var corners = [[x1, y1], [x2, y1], [x1, y2], [x2, y2]];
-    var inside = corners.every(function (c) { return Math.hypot(c[0] - 0.5, c[1] - 0.5) <= 0.47; });
-    return inside && size >= CFG.minFace && size <= CFG.maxFace && Math.hypot(cx - 0.5, cy - 0.5) <= 0.2;
+    var cx = (box.x + box.width / 2 - sx) / side, cy = (box.y + box.height / 2 - sy) / side;
+    var size = Math.max(box.width, box.height) / side;
+    return Math.hypot(cx - 0.5, cy - 0.5) <= 0.5 && size >= CFG.minFace && size <= CFG.maxFace;
   }
+  function present(now) { return manual || (now - lastSeen) < CFG.presentMs; }
 
   async function detectOnce() {
     if (detecting || !detectOpts || !video.videoWidth) return;
     if (stage !== 'position' && stage !== 'countdown' && stage !== 'scanning') return;
     detecting = true;
     try {
-      var r = await faceapi.detectSingleFace(video, detectOpts);
-      onFace(inFrame(r ? r.box : null), Date.now());
+      var all = await faceapi.detectAllFaces(video, detectOpts);
+      var faces = all.filter(function (r) { return inFrame(r.box); })
+        .sort(function (a, b) { return b.box.width * b.box.height - a.box.width * a.box.height; });
+      // only one person at a time: the nearest (largest) face counts, smaller faces behind are ignored,
+      // but two similar-sized faces are ambiguous, so wait until just one person is in front
+      var one = faces.length > 0 && (faces.length === 1 || faces[1].box.width * faces[1].box.height < 0.45 * faces[0].box.width * faces[0].box.height);
+      onFace(one, Date.now());
     } catch (e) {
       onFace(false, Date.now());
     } finally {
@@ -474,13 +468,15 @@ button{font-family:inherit}
 
   function onFace(ok, now) {
     faceOK = ok;
-    $('faceguide').classList.toggle('ok', ok);
-    if (ok) { lostSince = 0; if (!okSince) okSince = now; }
+    if (ok) { lastSeen = now; lostSince = 0; if (!okSince) okSince = now; }
     else { okSince = 0; if (!lostSince) lostSince = now; }
+    var here = present(now);
+    if (here) { if (!hereSince) hereSince = now; } else hereSince = 0;
+    scanner.classList.toggle('has', here);
+    scanner.classList.toggle('paused', (stage === 'countdown' || stage === 'scanning') && !here);
 
-    if (stage === 'position' && ok && now - okSince >= CFG.holdMs) startCountdown();
-    else if (stage === 'countdown' && !ok && now - lostSince >= CFG.lostGraceMs) beginPosition();
-    else if (stage === 'scanning' && !ok && now - lostSince >= CFG.lostResetMs) beginPosition();
+    if (stage === 'position' && here && now - hereSince >= CFG.holdMs) startCountdown();
+    else if ((stage === 'countdown' || stage === 'scanning') && !here && lostSince && now - lostSince >= CFG.resetMs) beginPosition();
   }
 
   /* ---------- camera ---------- */
@@ -524,11 +520,11 @@ button{font-family:inherit}
   function beginPosition() {
     clearT('count'); clearT('scan'); clearT('detect'); clearT('demoPos');
     progress = 0; setRing(0);
-    okSince = 0; lostSince = Date.now(); faceOK = false;
-    $('faceguide').classList.remove('ok');
+    okSince = 0; lostSince = Date.now(); faceOK = false; lastSeen = 0; hereSince = 0; manual = false;
+    scanner.classList.remove('has', 'paused');
     setStage('position');
     if (demo) {
-      timers.demoPos = setTimeout(function () { $('faceguide').classList.add('ok'); faceOK = true; timers.demoPos = setTimeout(startCountdown, 700); }, 1800);
+      timers.demoPos = setTimeout(function () { scanner.classList.add('has'); faceOK = true; timers.demoPos = setTimeout(startCountdown, 700); }, 1800);
     } else {
       timers.detect = setInterval(detectOnce, CFG.detectEveryMs);
     }
@@ -543,13 +539,16 @@ button{font-family:inherit}
 
   function startCountdown() {
     clearT('count'); clearT('demoPos');
-    var n = CFG.countFrom;
+    var elapsed = 0, shown = CFG.countFrom;
     setStage('countdown');
-    showCount(n);
+    showCount(shown);
     timers.count = setInterval(function () {
-      n -= 1;
-      if (n <= 0) { clearT('count'); beginScan(); } else { showCount(n); }
-    }, 1000);
+      if (!(demo || present(Date.now()))) return;     // pause while the face is out of view
+      elapsed += 100;
+      var left = CFG.countFrom - Math.floor(elapsed / 1000);
+      if (left <= 0) { clearT('count'); beginScan(); }
+      else if (left !== shown) { shown = left; showCount(left); }
+    }, 100);
   }
 
   function setRing(p) { $('ringFill').style.strokeDashoffset = String(100 - p); }
@@ -559,8 +558,7 @@ button{font-family:inherit}
     setStage('scanning');
     var step = 100 / (CFG.scanMs / 60);
     timers.scan = setInterval(function () {
-      var present = demo || faceOK || (Date.now() - lostSince < CFG.lostGraceMs);
-      if (!present) return;                       // pause while the face is out of frame
+      if (!(demo || present(Date.now()))) return;                       // pause while the face is out of frame
       progress = Math.min(100, progress + step);
       setRing(progress);
       if (progress >= 100) granted();
