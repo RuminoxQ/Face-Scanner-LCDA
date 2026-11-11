@@ -61,19 +61,12 @@ button{font-family:inherit}
 [data-stage=granted] #dots{opacity:1}
 .silhouette{position:absolute;top:0;left:0;width:100%;height:100%;display:none}
 [data-demo="1"][data-stage=position] .silhouette,[data-demo="1"][data-stage=countdown] .silhouette,[data-demo="1"][data-stage=scanning] .silhouette{display:block}
-.scanline{position:absolute;left:0;right:0;height:3px;background:#BBF7D0;box-shadow:0 0 24px 8px rgba(134,239,172,.55);animation:dcScan 1.6s ease-in-out infinite;display:none}
-[data-stage=scanning] .scanline{display:block}
-.count{position:absolute;top:0;left:0;width:100%;height:100%;background:rgba(255,255,255,.38);display:none;align-items:center;justify-content:center}
-[data-stage=countdown] .count{display:flex}
-.count span{font-family:'Sora',sans-serif;font-weight:800;line-height:1;font-size:calc(var(--s)*.5);color:#14532D;text-shadow:0 0 30px rgba(255,255,255,.8)}
-.count span.last{color:#15803D}
-.count span.pop{animation:dcPop .55s ease-out both}
 
 .ring{position:absolute;left:-5%;top:-5%;width:110%;height:110%;overflow:visible;transform:rotate(-90deg);opacity:0;filter:drop-shadow(0 0 6px rgba(22,163,74,.45));transition:opacity .25s}
-[data-stage=position] .ring,[data-stage=countdown] .ring,[data-stage=scanning] .ring,[data-stage=granted] .ring{opacity:1}
+[data-stage=position] .ring,[data-stage=scanning] .ring,[data-stage=granted] .ring{opacity:1}
 .ring circle:first-child{transition:stroke .2s}
 .scanner.has .ring circle:first-child{stroke:rgba(22,163,74,.8)}
-.scanner.paused .ring,.scanner.paused .count span{opacity:.4}
+.scanner.paused .ring{opacity:.4}
 .ring .fill{stroke:var(--accent);transition:stroke-dashoffset .12s linear}
 [data-stage=granted] .ring{filter:drop-shadow(0 0 16px rgba(22,163,74,.6))}
 [data-stage=granted] .ring .fill{stroke:#14532D}
@@ -154,8 +147,6 @@ button{font-family:inherit}
 <video id="video" playsinline muted autoplay></video>
 <svg class="silhouette" viewBox="0 0 400 400" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><circle cx="200" cy="170" r="78" fill="#14532D"/><path d="M40 420c0-90 70-140 160-140s160 50 160 140z" fill="#14532D"/></svg>
 <canvas id="dots" width="440" height="440"></canvas>
-<div class="scanline"></div>
-<div class="count"><span id="countNum">3</span></div>
 </div>
 
 <svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
@@ -209,9 +200,8 @@ button{font-family:inherit}
 
   /* ---- settings you can tune ---- */
   var CFG = {
-    holdMs: 300,        // a face must be present this long before the countdown starts
-    countFrom: 2,       // countdown length in seconds (only ticks while a face is present)
-    scanMs: 2000,       // scan duration (only advances while a face is present)
+    holdMs: 300,        // a face must be present this long before the scan starts
+    scanMs: 2500,       // scan duration (only advances while a face is present)
     presentMs: 900,     // a face counts as present for this long after it was last seen
     resetMs: 3000,      // go back to the start if no face is seen for this long mid-scan
     detectEveryMs: 100, // how often to look for a face
@@ -473,10 +463,10 @@ button{font-family:inherit}
     var here = present(now);
     if (here) { if (!hereSince) hereSince = now; } else hereSince = 0;
     scanner.classList.toggle('has', here);
-    scanner.classList.toggle('paused', (stage === 'countdown' || stage === 'scanning') && !here);
+    scanner.classList.toggle('paused', stage === 'scanning' && !here);
 
-    if (stage === 'position' && here && now - hereSince >= CFG.holdMs) startCountdown();
-    else if ((stage === 'countdown' || stage === 'scanning') && !here && lostSince && now - lostSince >= CFG.resetMs) beginPosition();
+    if (stage === 'position' && here && now - hereSince >= CFG.holdMs) beginScan();
+    else if (stage === 'scanning' && !here && lostSince && now - lostSince >= CFG.resetMs) beginPosition();
   }
 
   /* ---------- camera ---------- */
@@ -518,42 +508,22 @@ button{font-family:inherit}
   }
 
   function beginPosition() {
-    clearT('count'); clearT('scan'); clearT('detect'); clearT('demoPos');
+    clearT('scan'); clearT('detect'); clearT('demoPos');
     progress = 0; setRing(0);
     okSince = 0; lostSince = Date.now(); faceOK = false; lastSeen = 0; hereSince = 0; manual = false;
     scanner.classList.remove('has', 'paused');
     setStage('position');
     if (demo) {
-      timers.demoPos = setTimeout(function () { scanner.classList.add('has'); faceOK = true; timers.demoPos = setTimeout(startCountdown, 700); }, 1800);
+      timers.demoPos = setTimeout(function () { scanner.classList.add('has'); faceOK = true; timers.demoPos = setTimeout(beginScan, 700); }, 1800);
     } else {
       timers.detect = setInterval(detectOnce, CFG.detectEveryMs);
     }
   }
 
-  function showCount(n) {
-    var c = $('countNum');
-    c.textContent = n;
-    c.className = (n === 1 ? 'last ' : '') + 'pop';
-    void c.offsetWidth;            // restart the pop animation
-  }
-
-  function startCountdown() {
-    clearT('count'); clearT('demoPos');
-    var elapsed = 0, shown = CFG.countFrom;
-    setStage('countdown');
-    showCount(shown);
-    timers.count = setInterval(function () {
-      if (!(demo || present(Date.now()))) return;     // pause while the face is out of view
-      elapsed += 100;
-      var left = CFG.countFrom - Math.floor(elapsed / 1000);
-      if (left <= 0) { clearT('count'); beginScan(); }
-      else if (left !== shown) { shown = left; showCount(left); }
-    }, 100);
-  }
-
   function setRing(p) { $('ringFill').style.strokeDashoffset = String(100 - p); }
 
   function beginScan() {
+    clearT('demoPos');
     progress = 0; setRing(0);
     setStage('scanning');
     var step = 100 / (CFG.scanMs / 60);
