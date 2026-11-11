@@ -388,7 +388,7 @@ button{font-family:inherit}
         ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 130); bloom(bl, Math.max(W, H) * (.3 + .5 * bl));
       } else {
         var b = ease(el / 1.5);
-        S = .14 + (1.18 - .14) * b; ysc = 1 - .5 * b; oy = .6 * b; al = .35 + .65 * (1 - b) + .2 * b;
+        S = .14 + (1.18 - .14) * b; ysc = 1 - .64 * b; oy = .31 * b; al = .35 + .65 * (1 - b) + .1 * b;
         ph0 += dt; draw(ph0, S, ysc, oy, Math.min(1, al), 1, 130);
         bloom(1 - Math.min(1, el / .8), Math.max(W, H) * .8);
       }
