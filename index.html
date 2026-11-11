@@ -336,9 +336,11 @@ button{font-family:inherit}
           var a = pts[Math.max(0, k - 1)], b = pts[Math.min(M, k + 1)];
           tg.push(norm([b[0] - a[0], b[1] - a[1], b[2] - a[2]]));
         }
-        var sides = [], nrm = [];
+        var sides = [], nrm = [], Uc = norm(cross(tg[0], [0, 1, .15]));
         for (k = 0; k <= M; k++) {
-          var T = tg[k], U = norm(cross(T, [0, 1, .15])), V = cross(T, U), th = r.tw * 6.283 * (k / M) + t * spin * .9 + r.ph;
+          var T = tg[k], dp = Uc[0] * T[0] + Uc[1] * T[1] + Uc[2] * T[2];
+          var U = norm([Uc[0] - T[0] * dp, Uc[1] - T[1] * dp, Uc[2] - T[2] * dp]); Uc = U;
+          var V = cross(T, U), th = r.tw * 6.283 * (k / M) + t * spin * .9 + r.ph;
           var cs = Math.cos(th), sn = Math.sin(th);
           sides.push([U[0] * cs + V[0] * sn, U[1] * cs + V[1] * sn, U[2] * cs + V[2] * sn]);
           nrm.push([-U[0] * sn + V[0] * cs, -U[1] * sn + V[1] * cs, -U[2] * sn + V[2] * cs]);
@@ -348,7 +350,7 @@ button{font-family:inherit}
           return [W / 2 + x * unit * f, H / 2 + oy * H + y * unit * f * ysc, z];
         };
         for (k = 0; k < M; k++) {
-          var e = (k + .5) / M, hw = r.w * S * Math.pow(Math.sin(Math.PI * e), .55) * .5;
+          var e = (k + .5) / M, hw = r.w * S * Math.pow(Math.sin(Math.PI * e), .8) * .5;
           if (hw < .002) continue;
           var p0 = P(pts[k], sides[k], -hw), p1 = P(pts[k], sides[k], hw), p2 = P(pts[k + 1], sides[k + 1], hw), p3 = P(pts[k + 1], sides[k + 1], -hw);
           var n = nrm[k], dd = Math.abs(n[0] * L[0] + n[1] * L[1] + n[2] * L[2]), spc = Math.pow(dd, 10);
@@ -378,16 +380,16 @@ button{font-family:inherit}
       last = now;
       if (mode === 'ambient') {
         S = 1.1; ysc = .85; al = .3 * Math.min(1, el / 1); spin = .5;
-        ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 64, 7);
+        ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 90, 7);
       } else if (mode === 'energy') {
         var e = el / 3.3, g = eio((e - .62) / .38), k = ease(el / .8);
         S = (1.1 - .1 * ease(e / .65)) * (1 - .86 * g);
         ysc = .85 + .15 * k; al = .3 + .7 * ease(el / .9); spin = 1 + 1.6 * g; bl = eio((e - .7) / .3);
-        ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 110); bloom(bl, Math.max(W, H) * (.3 + .5 * bl));
+        ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 130); bloom(bl, Math.max(W, H) * (.3 + .5 * bl));
       } else {
         var b = ease(el / 1.5);
         S = .14 + (1.18 - .14) * b; ysc = 1 - .5 * b; oy = .6 * b; al = .35 + .65 * (1 - b) + .2 * b;
-        ph0 += dt; draw(ph0, S, ysc, oy, Math.min(1, al), 1, 110);
+        ph0 += dt; draw(ph0, S, ysc, oy, Math.min(1, al), 1, 130);
         bloom(1 - Math.min(1, el / .8), Math.max(W, H) * .8);
       }
       raf = requestAnimationFrame(frame);
