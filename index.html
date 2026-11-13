@@ -55,25 +55,20 @@ button{font-family:inherit}
 .scanner{--s:min(64vh,92vw,720px);position:relative;width:var(--s);height:var(--s)}
 .disc{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;overflow:hidden;background:radial-gradient(closest-side,#F6FDF8,#D3F0DD);box-shadow:0 0 0 8px rgba(255,255,255,.75),0 22px 60px rgba(20,83,45,.28);transform:translateZ(0);-webkit-mask-image:-webkit-radial-gradient(white,black)}
 #video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;transform:scaleX(-1);opacity:0;transition:opacity .25s}
-[data-stage=position] #video,[data-stage=countdown] #video,[data-stage=scanning] #video{opacity:1}
+[data-stage=position] #video,[data-stage=scanning] #video,[data-stage=granted] #video{opacity:1}
 [data-demo="1"] #video{opacity:0!important}
-#dots{position:absolute;top:0;left:0;width:100%;height:100%;opacity:0}
-[data-stage=granted] #dots{opacity:1}
 .silhouette{position:absolute;top:0;left:0;width:100%;height:100%;display:none}
-[data-demo="1"][data-stage=position] .silhouette,[data-demo="1"][data-stage=countdown] .silhouette,[data-demo="1"][data-stage=scanning] .silhouette{display:block}
+[data-demo="1"][data-stage=position] .silhouette,[data-demo="1"][data-stage=scanning] .silhouette,[data-demo="1"][data-stage=granted] .silhouette{display:block}
 
-.ring{position:absolute;left:-5%;top:-5%;width:110%;height:110%;overflow:visible;transform:rotate(-90deg);opacity:0;filter:drop-shadow(0 0 6px rgba(22,163,74,.45));transition:opacity .25s}
-[data-stage=position] .ring,[data-stage=scanning] .ring,[data-stage=granted] .ring{opacity:1}
-.ring circle:first-child{transition:stroke .2s}
-.scanner.has .ring circle:first-child{stroke:rgba(22,163,74,.8)}
-.scanner.paused .ring{opacity:.4}
-.ring .fill{stroke:var(--accent);transition:stroke-dashoffset .12s linear}
-[data-stage=granted] .ring{filter:drop-shadow(0 0 16px rgba(22,163,74,.6))}
-[data-stage=granted] .ring .fill{stroke:#14532D}
 [data-stage=granted] .disc{background:#052712}
-.check{position:absolute;right:2%;bottom:8%;width:20%;height:20%;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;box-shadow:0 0 0 6px #fff}
+.pct{position:absolute;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;color:#fff;font-size:calc(var(--s)*.2);text-shadow:0 2px 24px rgba(0,0,0,.55),0 0 6px rgba(0,0,0,.35);font-variant-numeric:tabular-nums;pointer-events:none;transition:opacity .2s}
+.pct small{font-size:.5em;margin-left:.08em;font-weight:700}
+[data-stage=scanning] .pct{display:flex}
+.scanner.paused .pct{opacity:.45}
+.scanner.has .disc{box-shadow:0 0 0 8px rgba(22,163,74,.6),0 22px 60px rgba(20,83,45,.28)}
+.check{position:absolute;left:33%;top:33%;width:34%;height:34%;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;box-shadow:0 0 0 7px #fff,0 12px 40px rgba(20,83,45,.4)}
 [data-stage=granted] .check{display:flex;animation:dcPop .55s ease-out both}
-.check svg{width:56%;height:56%}
+.check svg{width:58%;height:58%}
 .denied{position:absolute;top:0;left:0;width:100%;height:100%;border-radius:50%;background:rgba(240,253,244,.96);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:12%;text-align:center}
 [data-stage=denied] .denied{display:flex}
 .denied h2{margin:0;font-family:'Sora',sans-serif;font-weight:700;font-size:clamp(18px,2.4vw,30px)}
@@ -107,7 +102,8 @@ button{font-family:inherit}
 .bar .track{flex:1 1 auto;height:10px;border-radius:999px;background:rgba(255,255,255,.65);overflow:hidden}
 .bar .fillbar{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#4ADE80,#15803D)}
 .bar .pct{min-width:52px;text-align:right;font-size:16px;font-weight:700;color:#14532D;font-variant-numeric:tabular-nums}
-#again{display:none;border-color:#14532D;color:#14532D;background:rgba(255,255,255,.85);min-height:52px;padding:0 28px;font-size:17px}
+.hint{display:none;font-size:clamp(14px,1.3vw,18px);letter-spacing:.08em;color:#166534;opacity:.85;animation:hintPulse 2s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{opacity:.35}50%{opacity:.95}}
 
 /* ---------- fullscreen button ---------- */
 #fs{position:fixed;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:50;width:44px;height:44px;border-radius:12px;border:1px solid rgba(20,83,45,.35);background:rgba(255,255,255,.65);color:#14532D;display:none;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:.75;transition:opacity .15s}
@@ -148,13 +144,8 @@ button{font-family:inherit}
 <div class="disc">
 <video id="video" playsinline muted autoplay></video>
 <svg class="silhouette" viewBox="0 0 400 400" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><circle cx="200" cy="170" r="78" fill="#14532D"/><path d="M40 420c0-90 70-140 160-140s160 50 160 140z" fill="#14532D"/></svg>
-<canvas id="dots" width="440" height="440"></canvas>
+<div class="pct" aria-hidden="true"><span id="scanPct">0</span><small>%</small></div>
 </div>
-
-<svg class="ring" viewBox="0 0 100 100" aria-hidden="true">
-<circle cx="50" cy="50" r="48" fill="none" stroke="rgba(20,83,45,.16)" stroke-width="1.6"/>
-<circle id="ringFill" class="fill" cx="50" cy="50" r="48" fill="none" stroke-width="2.4" stroke-linecap="round" pathLength="100" stroke-dasharray="100" stroke-dashoffset="100"/>
-</svg>
 
 <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
 
@@ -184,7 +175,7 @@ button{font-family:inherit}
 <div class="track"><div class="fillbar" id="launchFill"></div></div>
 <div class="pct"><span id="launchPct">0</span>%</div>
 </div>
-<button class="btn rise" id="again">Start over</button>
+<div class="hint" id="again">Tap or press Space to start over</div>
 </div>
 </section>
 
@@ -213,7 +204,7 @@ button{font-family:inherit}
 
 
   var $ = function (id) { return document.getElementById(id); };
-  var scanner = document.querySelector('.scanner'), app = $('app'), video = $('video'), dots = $('dots');
+  var scanner = document.querySelector('.scanner'), app = $('app'), video = $('video');
   var timers = {};
   var stage = 'idle', demo = false, stream = null;
   var progress = 0;
@@ -573,7 +564,7 @@ button{font-family:inherit}
 
   function beginPosition() {
     clearT('scan'); clearT('detect'); clearT('demoPos');
-    progress = 0; setRing(0);
+    progress = 0; $('scanPct').textContent = '0';
     okSince = 0; lostSince = Date.now(); faceOK = false; lastSeen = 0; hereSince = 0; manual = false;
     scanner.classList.remove('has', 'paused');
     setStage('position');
@@ -584,17 +575,16 @@ button{font-family:inherit}
     }
   }
 
-  function setRing(p) { $('ringFill').style.strokeDashoffset = String(100 - p); }
-
+  
   function beginScan() {
     clearT('demoPos');
-    progress = 0; setRing(0);
+    progress = 0; $('scanPct').textContent = '0';
     setStage('scanning');
     var step = 100 / (CFG.scanMs / 60);
     timers.scan = setInterval(function () {
       if (!(demo || present(Date.now()))) return;                       // pause while the face is out of frame
       progress = Math.min(100, progress + step);
-      setRing(progress);
+      $('scanPct').textContent = String(Math.round(progress));
       if (progress >= 100) granted();
     }, 60);
   }
@@ -602,13 +592,10 @@ button{font-family:inherit}
   function granted() {
     clearT('scan'); clearT('detect');
     setStage('granted');
-    drawDots();
-    timers.dots = setInterval(drawDots, 90);
-    timers.next = setTimeout(startEnergy, 2600);
+    timers.next = setTimeout(startEnergy, 1600);
   }
 
   function startEnergy() {
-    clearT('dots');
     setStage('energy');
     Ribbons.start('energy');
     timers.next = setTimeout(startReveal, 3300);
@@ -628,52 +615,18 @@ button{font-family:inherit}
       if (p >= 100) {
         clearT('launch');
         $('launchNote').textContent = 'Ready. Welcome aboard.';
-        $('again').style.display = 'inline-block';
+        $('again').style.display = 'block';
       }
     }, 50);
   }
 
   function reset() {
     clearAll(); Ribbons.start('ambient'); Birds.stop();
-    var c = dots.getContext('2d'); c.clearRect(0, 0, dots.width, dots.height);
-    progress = 0; setRing(0); demo = false; app.setAttribute('data-demo', '0');
+    progress = 0; $('scanPct').textContent = '0'; demo = false; app.setAttribute('data-demo', '0');
     setStage('idle');
   }
 
   /* ---------- dot-matrix portrait ---------- */
-  var off = document.createElement('canvas'); off.width = off.height = 44;
-  function drawDots() {
-    var G = 44, ctx = dots.getContext('2d'), o = off.getContext('2d', { willReadFrequently: true });
-    if (demo) {
-      o.fillStyle = '#1a1a1a'; o.fillRect(0, 0, G, G);
-      o.fillStyle = '#d8d8d8'; o.beginPath(); o.ellipse(G / 2, G * .42, G * .2, G * .26, 0, 0, Math.PI * 2); o.fill();
-      o.beginPath(); o.ellipse(G / 2, G * 1.02, G * .4, G * .3, 0, 0, Math.PI * 2); o.fill();
-      o.fillStyle = '#333';
-      o.beginPath(); o.arc(G * .42, G * .4, 1.4, 0, Math.PI * 2); o.fill();
-      o.beginPath(); o.arc(G * .58, G * .4, 1.4, 0, Math.PI * 2); o.fill();
-    } else if (video.videoWidth) {
-      var side = Math.min(video.videoWidth, video.videoHeight);
-      o.save(); o.translate(G, 0); o.scale(-1, 1);
-      o.drawImage(video, (video.videoWidth - side) / 2, (video.videoHeight - side) / 2, side, side, 0, 0, G, G);
-      o.restore();
-    } else { return; }
-    var data = o.getImageData(0, 0, G, G).data, W = dots.width, cell = W / G;
-    ctx.clearRect(0, 0, W, W);
-    for (var y = 0; y < G; y++) {
-      for (var x = 0; x < G; x++) {
-        var dx = x + .5 - G / 2, dy = y + .5 - G / 2;
-        if (dx * dx + dy * dy > (G / 2) * (G / 2)) continue;
-        var i = (y * G + x) * 4;
-        var luma = (.3 * data[i] + .59 * data[i + 1] + .11 * data[i + 2]) / 255;
-        var l = Math.min(1, Math.max(0, (luma - .12) * 1.6));
-        ctx.fillStyle = l > .66 ? '#FFFFFF' : (l > .36 ? '#86EFAC' : '#22C55E');
-        ctx.beginPath();
-        ctx.arc((x + .5) * cell, (y + .5) * cell, cell * .5 * (.2 + .8 * l), 0, Math.PI * 2);
-        ctx.fill();
-      }
-    }
-  }
-
   /* ---------- full screen ---------- */
   var fsBtn = $('fs'), root = document.documentElement;
   var fsEnabled = document.fullscreenEnabled || document.webkitFullscreenEnabled;
@@ -701,7 +654,15 @@ button{font-family:inherit}
   $('tap').addEventListener('click', start);
   $('retry').addEventListener('click', start);
   $('demoBtn').addEventListener('click', startDemo);
-  $('again').addEventListener('click', reset);
+  function restartIfDone(e) {
+    if (stage !== 'reveal' || $('again').style.display !== 'block') return;
+    if (e && e.target && e.target.closest && e.target.closest('#fs')) return;
+    reset();
+  }
+  document.addEventListener('click', restartIfDone);
+  document.addEventListener('keydown', function (e) {
+    if (e.code === 'Space' || e.key === ' ') { if (stage === 'reveal') e.preventDefault(); restartIfDone(); }
+  });
 
   // start loading the detector right away so the first scan is quick
   ensureModel().catch(function () {});
