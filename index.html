@@ -105,8 +105,8 @@ button{font-family:inherit}
 .bar .track{flex:1 1 auto;height:10px;border-radius:999px;background:rgba(255,255,255,.65);overflow:hidden}
 .bar .fillbar{height:100%;width:0;border-radius:999px;background:linear-gradient(90deg,#4ADE80,#15803D)}
 .bar .pct{min-width:52px;text-align:right;font-size:16px;font-weight:700;color:#14532D;font-variant-numeric:tabular-nums}
-.hint{display:none;font-size:clamp(14px,1.3vw,18px);letter-spacing:.08em;color:#166534;opacity:.85;animation:hintPulse 2s ease-in-out infinite}
-@keyframes hintPulse{0%,100%{opacity:.35}50%{opacity:.95}}
+.hint{display:none;font-size:clamp(14px,1.3vw,18px);letter-spacing:.08em;color:#14532D;font-weight:500;opacity:.85;animation:hintPulse 2s ease-in-out infinite}
+@keyframes hintPulse{0%,100%{opacity:.5}50%{opacity:1}}
 
 /* ---------- fullscreen button ---------- */
 #fs{position:fixed;top:max(14px,env(safe-area-inset-top));right:max(14px,env(safe-area-inset-right));z-index:50;width:44px;height:44px;border-radius:12px;border:1px solid rgba(20,83,45,.35);background:rgba(255,255,255,.65);color:#14532D;display:none;align-items:center;justify-content:center;cursor:pointer;padding:0;opacity:.75;transition:opacity .15s}
@@ -172,11 +172,7 @@ button{font-family:inherit}
 <img class="logo" src="logo.png" alt="LCDA">
 <div class="rise" style="display:flex;flex-direction:column;align-items:center;gap:8px;animation-delay:1.2s">
 <h1 class="title">Launching Mobile LCDA</h1>
-<div class="note" id="launchNote">Preparing your experience…</div>
-</div>
-<div class="bar rise" style="animation-delay:1.4s">
-<div class="track"><div class="fillbar" id="launchFill"></div></div>
-<div class="pct"><span id="launchPct">0</span>%</div>
+<div class="note" id="launchNote">&nbsp;</div>
 </div>
 <div class="hint" id="again">Tap or press Space to start over</div>
 </div>
@@ -607,18 +603,15 @@ button{font-family:inherit}
 
   function startReveal() {
     $('again').style.display = 'none';
-    $('launchNote').textContent = 'Preparing your experience…';
+    $('launchNote').textContent = '\u00a0';
     var p = 0;
-    $('launchFill').style.width = '0%'; $('launchPct').textContent = '0';
     setStage('reveal');
     Ribbons.start('reveal'); Birds.start();
     timers.launch = setInterval(function () {
       p = Math.min(100, p + 0.9);
-      $('launchFill').style.width = p + '%';
-      $('launchPct').textContent = String(Math.round(p));
       if (p >= 100) {
         clearT('launch');
-        $('launchNote').textContent = 'Ready. Welcome aboard.';
+        $('launchNote').textContent = 'Welcome aboard.';
         $('again').style.display = 'block';
       }
     }, 50);
