@@ -43,10 +43,11 @@ button{font-family:inherit}
 .g1{left:-12%;top:-20%;width:60%;height:90%;background:radial-gradient(closest-side,rgba(34,197,94,.28),transparent)}
 .g2{right:-14%;bottom:-30%;width:70%;height:100%;background:radial-gradient(closest-side,rgba(74,222,128,.2),transparent)}
 .skyline{position:absolute;left:50%;bottom:1.5vh;transform:translateX(-50%);width:min(92vw,130vh);opacity:.95;pointer-events:none;-webkit-mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent);mask-image:linear-gradient(90deg,transparent,#000 8%,#000 92%,transparent)}
-[data-stage=energy] .skyline,[data-stage=reveal] .skyline{display:none}
+
 .scape{position:absolute;left:0;right:0;bottom:7vh;width:100%;height:34vh;pointer-events:none}
 .hills{position:absolute;left:0;right:0;bottom:0;width:100%;height:15vh;pointer-events:none}
-[data-stage=energy] .scape,[data-stage=reveal] .scape,[data-stage=energy] .hills,[data-stage=reveal] .hills{display:none}
+.skyline,.scape,.hills{transition:opacity .9s ease,visibility 0s}
+[data-stage=energy] .skyline,[data-stage=reveal] .skyline,[data-stage=energy] .scape,[data-stage=reveal] .scape,[data-stage=energy] .hills,[data-stage=reveal] .hills{opacity:0;visibility:hidden;transition:opacity .9s ease,visibility 0s .9s}
 .forest{position:absolute;left:0;right:0;bottom:0;width:100%;height:34vh}
 .firefly{display:none;position:absolute;border-radius:50%;background:#BEF264;box-shadow:0 0 12px 4px rgba(190,242,100,.55);opacity:0;animation:dcFloat 10s ease-in-out infinite both}
 
@@ -61,10 +62,10 @@ button{font-family:inherit}
 [data-demo="1"][data-stage=position] .silhouette,[data-demo="1"][data-stage=scanning] .silhouette,[data-demo="1"][data-stage=granted] .silhouette{display:block}
 
 [data-stage=granted] .disc{background:#052712}
-.pct{position:absolute;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;color:#fff;font-size:calc(var(--s)*.2);text-shadow:0 2px 24px rgba(0,0,0,.55),0 0 6px rgba(0,0,0,.35);font-variant-numeric:tabular-nums;pointer-events:none;transition:opacity .2s}
-.pct small{font-size:.5em;margin-left:.08em;font-weight:700}
-[data-stage=scanning] .pct{display:flex}
-.scanner.paused .pct{opacity:.45}
+.scanpct{position:absolute;left:0;top:0;width:100%;height:100%;display:none;align-items:center;justify-content:center;font-family:'Sora',sans-serif;font-weight:800;color:#fff;font-size:calc(var(--s)*.2);text-shadow:0 2px 24px rgba(0,0,0,.55),0 0 6px rgba(0,0,0,.35);font-variant-numeric:tabular-nums;pointer-events:none;transition:opacity .2s}
+.scanpct small{font-size:.5em;margin-left:.08em;font-weight:700}
+[data-stage=scanning] .scanpct{display:flex}
+.scanner.paused .scanpct{opacity:.45}
 .scanner.has .disc{box-shadow:0 0 0 8px rgba(22,163,74,.6),0 22px 60px rgba(20,83,45,.28)}
 .check{position:absolute;left:33%;top:33%;width:34%;height:34%;border-radius:50%;background:var(--accent);display:none;align-items:center;justify-content:center;box-shadow:0 0 0 7px #fff,0 12px 40px rgba(20,83,45,.4)}
 [data-stage=granted] .check{display:flex;animation:dcPop .55s ease-out both}
@@ -84,7 +85,9 @@ button{font-family:inherit}
 /* ---------- ribbon transition + launch page ---------- */
 .layer{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;display:none}
 [data-stage=energy] #silk,[data-stage=reveal] #silk,[data-stage=energy] #energy,[data-stage=reveal] #reveal{display:block}
-[data-stage=energy] #scene,[data-stage=reveal] #scene,[data-stage=energy] #fireflies,[data-stage=reveal] #fireflies{display:none}
+#scene{transition:opacity .6s ease,transform .9s ease,visibility 0s}
+[data-stage=energy] #scene,[data-stage=reveal] #scene{opacity:0;transform:scale(1.07);visibility:hidden;pointer-events:none;transition:opacity .6s ease,transform .9s ease,visibility 0s .9s}
+[data-stage=energy] #fireflies,[data-stage=reveal] #fireflies{display:none}
 #silk{display:block;background:radial-gradient(55% 70% at 8% 55%,rgba(254,252,232,.95),transparent 70%),radial-gradient(60% 80% at 100% 75%,rgba(110,200,140,.55),transparent 70%),linear-gradient(112deg,#f7fee7 0%,#ecfccb 26%,#dcfce7 52%,#bbf7d0 78%,#9ee0b4 100%)}
 @keyframes silkIn{from{opacity:0}to{opacity:1}}
 #silk .stripes{position:absolute;left:-20%;top:-20%;width:140%;height:140%;background:repeating-linear-gradient(100deg,rgba(255,255,255,0) 0 46px,rgba(255,255,255,.34) 46px 84px,rgba(22,163,74,.07) 84px 150px,rgba(255,255,255,0) 150px 210px);-webkit-mask-image:radial-gradient(75% 75% at 50% 50%,#000,transparent);mask-image:radial-gradient(75% 75% at 50% 50%,#000,transparent);animation:stripeDrift 14s linear infinite}
@@ -93,7 +96,7 @@ button{font-family:inherit}
 #ribbons{position:absolute;top:0;left:0;width:100%;height:100%;display:block}
 #reveal{color:#14532D}
 .center{position:absolute;top:0;left:0;width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2.6vh;padding:24px 24px 14vh;text-align:center}
-.logo{height:min(40vh,62vw);width:auto;filter:drop-shadow(0 0 22px rgba(255,255,255,.9)) drop-shadow(0 6px 18px rgba(20,83,45,.18));animation:logoIn 1.1s .15s cubic-bezier(.2,.8,.2,1) both}
+.logo{height:min(40vh,62vw);width:auto;filter:drop-shadow(0 0 22px rgba(255,255,255,.9)) drop-shadow(0 6px 18px rgba(20,83,45,.18));animation:logoIn 1.4s .3s cubic-bezier(.2,.8,.2,1) both}
 @keyframes logoIn{from{opacity:0;transform:scale(.82);filter:blur(14px) drop-shadow(0 0 22px #fff)}to{opacity:1;transform:scale(1)}}
 .rise{animation:dcRise .6s ease-out both}
 .title{margin:0;font-family:'Sora',sans-serif;font-weight:700;font-size:clamp(20px,3vw,40px);letter-spacing:.14em;text-transform:uppercase;color:#14532D}
@@ -144,7 +147,7 @@ button{font-family:inherit}
 <div class="disc">
 <video id="video" playsinline muted autoplay></video>
 <svg class="silhouette" viewBox="0 0 400 400" preserveAspectRatio="xMidYMax slice" aria-hidden="true"><circle cx="200" cy="170" r="78" fill="#14532D"/><path d="M40 420c0-90 70-140 160-140s160 50 160 140z" fill="#14532D"/></svg>
-<div class="pct" aria-hidden="true"><span id="scanPct">0</span><small>%</small></div>
+<div class="scanpct" aria-hidden="true"><span id="scanPct">0</span><small>%</small></div>
 </div>
 
 <div class="check"><svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
@@ -167,11 +170,11 @@ button{font-family:inherit}
 <section id="reveal" class="layer">
 <div class="center">
 <img class="logo" src="logo.png" alt="LCDA">
-<div class="rise" style="display:flex;flex-direction:column;align-items:center;gap:8px;animation-delay:.9s">
+<div class="rise" style="display:flex;flex-direction:column;align-items:center;gap:8px;animation-delay:1.2s">
 <h1 class="title">Launching Mobile LCDA</h1>
 <div class="note" id="launchNote">Preparing your experience…</div>
 </div>
-<div class="bar rise" style="animation-delay:1.1s">
+<div class="bar rise" style="animation-delay:1.4s">
 <div class="track"><div class="fillbar" id="launchFill"></div></div>
 <div class="pct"><span id="launchPct">0</span>%</div>
 </div>
@@ -259,14 +262,14 @@ button{font-family:inherit}
     var cv = $('ribbons'), cx = cv.getContext('2d'), W = 0, H = 0, raf = 0, t0 = 0, mode = 'ambient', ph0 = 0, last = 0, warpLift = 0, warpTilt = 0;
     var PAL = ['#14532D', '#166534', '#15803D', '#16A34A', '#22C55E', '#4ADE80', '#86EFAC', '#065F46', '#A3E635', '#BEF264', '#0F766E'];
     function hex(h) { return [parseInt(h.substr(1, 2), 16), parseInt(h.substr(3, 2), 16), parseInt(h.substr(5, 2), 16)]; }
-    var R = [], N = 15, i;
+    var R = [], N = 21, i, YG = ['#A3E635', '#BEF264', '#D9F99D', '#C5E063', '#B5D930', '#E4F07A'], AMB = { 0: 1, 2: 1, 3: 1, 5: 1, 9: 1, 15: 1, 16: 1, 18: 1 };
     for (i = 0; i < N; i++) {
-      var thin = i >= 10;
+      var thin = i >= 10 && i < 15, yg = i >= 15;
       R.push({
-        col: hex(PAL[(i * 3 + (thin ? 8 : 0)) % PAL.length]), w: thin ? .02 + rnd(i + 5) * .02 : .1 + rnd(i + 9) * .13,
+        col: hex(yg ? YG[i - 15] : PAL[(i * 3 + (thin ? 8 : 0)) % PAL.length]), w: thin ? .02 + rnd(i + 5) * .02 : yg ? (i > 18 ? .035 : .11 + rnd(i + 9) * .1) : .1 + rnd(i + 9) * .13, amb: !!AMB[i],
         a: .34 + (i % 3) * .14, b: .34 + ((i + 1) % 3) * .14, c: .34 + ((i + 2) % 3) * .14,
         ph: i * 1.13, tw: .12 + rnd(i + 21) * .3, A: .85 + rnd(i + 31) * .5, B: .55 + rnd(i + 41) * .4, C: .45 + rnd(i + 51) * .35,
-        sp: (.35 + rnd(i + 61) * .4) * (i % 2 ? 1 : -1), thin: thin
+        sp: (.35 + rnd(i + 61) * .4) * (i % 2 ? 1 : -1), thin: thin || (yg && i > 18)
       });
     }
     var sparks = [];
@@ -303,8 +306,9 @@ button{font-family:inherit}
         cx.beginPath(); cx.arc(sp.x * W, ((sp.y - t * sp.v) % 1 + 1) % 1 * H, sp.r, 0, 6.283); cx.fill();
       }
       cx.globalAlpha = 1;
-      for (var ri = 0; ri < Math.min(R.length, maxR || 99); ri++) {
+      for (var ri = 0; ri < R.length; ri++) {
         var r = R[ri], pts = [], tg = [];
+        if (maxR && !r.amb) continue;
         for (k = 0; k <= M; k++) pts.push(ctr(r, k / M, t * spin, S));
         for (k = 0; k <= M; k++) {
           var a = pts[Math.max(0, k - 1)], b = pts[Math.min(M, k + 1)];
@@ -359,15 +363,15 @@ button{font-family:inherit}
         S = 1.1; ysc = .85; al = .3 * Math.min(1, el / 1); spin = .5;
         ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 90, 7);
       } else if (mode === 'energy') {
-        var e = el / 3.3, g = eio((e - .62) / .38), k = ease(el / .8);
+        var e = el / 3.6, g = eio((e - .62) / .38), k = ease(el / .8);
         S = (1.1 - .1 * ease(e / .65)) * (1 - .86 * g);
-        ysc = .85 + .15 * k; al = .3 + .7 * ease(el / .9); spin = 1 + 1.6 * g; bl = eio((e - .7) / .3);
+        ysc = .85 + .15 * ease(el / 1.3); al = .3 + .7 * ease(el / .9); spin = 1 + 1.6 * g; bl = eio((e - .7) / .3);
         ph0 += dt * spin; draw(ph0, S, ysc, 0, al, 1, 130); bloom(bl, Math.max(W, H) * (.3 + .5 * bl));
       } else {
-        var b = ease(el / 1.5);
+        var b = ease(el / 2.1);
         S = .14 + (1.18 - .14) * b; ysc = 1 - .5 * b; oy = .34 * b; warpLift = .3 * b; warpTilt = .1 * b; al = .35 + .65 * (1 - b) + .1 * b;
         ph0 += dt; draw(ph0, S, ysc, oy, Math.min(1, al), 1, 130);
-        bloom(1 - Math.min(1, el / .8), Math.max(W, H) * .8);
+        bloom(1 - eio(el / 1.3), Math.max(W, H) * .8);
       }
       raf = requestAnimationFrame(frame);
     }
@@ -592,13 +596,13 @@ button{font-family:inherit}
   function granted() {
     clearT('scan'); clearT('detect');
     setStage('granted');
-    timers.next = setTimeout(startEnergy, 1600);
+    timers.next = setTimeout(startEnergy, 1500);
   }
 
   function startEnergy() {
     setStage('energy');
     Ribbons.start('energy');
-    timers.next = setTimeout(startReveal, 3300);
+    timers.next = setTimeout(startReveal, 3600);
   }
 
   function startReveal() {
