@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<meta name="build" content="2026-11-18 matrix-v2">
+<meta name="build" content="2026-11-18 clean-v1">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -68,12 +68,8 @@ button{font-family:inherit}
 .skyline,.scape,.hills{transition:opacity .9s ease,visibility 0s}
 [data-stage=energy] .skyline,[data-stage=reveal] .skyline,[data-stage=energy] .scape,[data-stage=reveal] .scape,[data-stage=energy] .hills,[data-stage=reveal] .hills{opacity:0;visibility:hidden;transition:opacity .9s ease,visibility 0s .9s}
 .forest{position:absolute;left:0;right:0;bottom:0;width:100%;height:34vh}
-#rain,.dgrid{position:absolute;top:0;left:0;width:100%;height:100%;pointer-events:none;display:none}
-.dgrid{background-image:linear-gradient(rgba(21,128,61,.07) 1px,transparent 1px),linear-gradient(90deg,rgba(21,128,61,.07) 1px,transparent 1px);background-size:32px 32px;-webkit-mask-image:radial-gradient(ellipse at 50% 45%,transparent 18%,#000 80%);mask-image:radial-gradient(ellipse at 50% 45%,transparent 18%,#000 80%)}
-[data-stage=reveal] #rain,[data-stage=reveal] .dgrid{display:block;animation:fIn 1.4s .5s both}
 .forest{transition:opacity .9s ease,visibility 0s}
 [data-stage=energy] .forest,[data-stage=reveal] .forest{opacity:0;visibility:hidden;transition:opacity .9s ease,visibility 0s .9s}
-[data-stage=reveal] #launchNote,[data-stage=reveal] #launchPct{font-family:ui-monospace,Menlo,Consolas,monospace;letter-spacing:.08em}
 .forest .mist{animation:mistDrift 26s ease-in-out infinite alternate}
 @keyframes mistDrift{from{transform:translateX(-60px)}to{transform:translateX(60px)}}
 .firefly{display:none;position:absolute;border-radius:50%;background:#BEF264;box-shadow:0 0 12px 4px rgba(190,242,100,.55);opacity:0;animation:dcFloat 10s ease-in-out infinite both}
@@ -152,8 +148,6 @@ button{font-family:inherit}
 <div class="stripes"></div>
 <canvas id="ribbons"></canvas>
 </section>
-<div class="dgrid" aria-hidden="true"></div>
-<canvas id="rain" aria-hidden="true"></canvas>
 
 
 <svg class="abs" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" aria-hidden="true"><g id="contours" fill="none" stroke="#15803D" stroke-opacity=".13" stroke-width="1.2"></g></svg>
@@ -484,59 +478,7 @@ button{font-family:inherit}
       stop: function () { if (raf) cancelAnimationFrame(raf); raf = 0; }
     };
   })();
-  /* ---------- digital rain ---------- */
-  var Rain = (function () {
-    var cv = $('rain'), cx = cv.getContext('2d'), W = 0, H = 0, raf = 0, last = 0, cols = [], FS = 16, DPR = 1;
-    var G = '01234567890101°′+:/N E'.split(''), WORDS = ['LCDA', 'TANAH', 'HUTAN', 'SARAWAK', 'KUCHING', 'BUMI', 'GREEN', 'LAND', 'LCDA MOBILE'];
-    function g() { return G[(Math.random() * G.length) | 0]; }
-    function size() {
-      DPR = Math.min(window.devicePixelRatio || 1, 2);
-      W = cv.clientWidth; H = cv.clientHeight; cv.width = W * DPR; cv.height = H * DPR; cx.setTransform(DPR, 0, 0, DPR, 0, 0);
-      var n = Math.ceil(W / FS); cols = [];
-      for (var i = 0; i < n; i++) {
-        var word = Math.random() < 0.3 ? WORDS[(Math.random() * WORDS.length) | 0].replace(/ /g, '') : null;
-        var len = word ? word.length + 3 : 8 + ((Math.random() * 18) | 0), ch = [];
-        for (var k = 0; k < len; k++) ch.push(word && k >= 3 ? word.charAt(len - 1 - k) : g());
-        cols.push({ y: -Math.random() * (H / FS) * 1.4, v: 6 + Math.random() * 12, len: len, ch: ch, acc: 0, word: !!word });
-      }
-    }
-    function leaf(x, y, i, al) {                    // a small falling leaf leads each stream
-      cx.save(); cx.translate(x, y); cx.rotate(Math.sin(last / 600 + i) * 0.5);
-      cx.fillStyle = 'rgba(6,78,59,' + al + ')';
-      cx.beginPath(); cx.moveTo(0, -8); cx.quadraticCurveTo(7, -2, 0, 8); cx.quadraticCurveTo(-7, -2, 0, -8); cx.fill();
-      cx.strokeStyle = 'rgba(220,252,231,' + al * 0.8 + ')'; cx.lineWidth = 0.8; cx.beginPath(); cx.moveTo(0, -5); cx.lineTo(0, 6); cx.stroke();
-      cx.restore();
-    }
-    function frame(ts) {
-      raf = requestAnimationFrame(frame);
-      var dt = Math.min(0.05, (ts - last) / 1000); last = ts;
-      cx.clearRect(0, 0, W, H);
-      cx.font = '600 ' + FS + 'px ui-monospace,Menlo,Consolas,monospace'; cx.textAlign = 'center'; cx.textBaseline = 'top';
-      var mx = W / 2, my = H * 0.45, R = Math.min(W, H) * 0.5, rows = H / FS;
-      for (var i = 0; i < cols.length; i++) {
-        var c = cols[i], x = i * FS + FS / 2;
-        c.y += c.v * dt; c.acc += dt;
-        if (c.acc > 0.09) { c.acc = 0; var m = (Math.random() * c.len) | 0; if (!c.word || m < 3) c.ch[m] = g(); }
-        if (c.y - c.len > rows) { c.y = -Math.random() * 10; c.v = 6 + Math.random() * 12; }
-        for (var k = 0; k < c.len; k++) {
-          var yy = (c.y - k) * FS; if (yy < -FS || yy > H) continue;
-          var d = Math.hypot(x - mx, yy - my) / R, fade = 0.3 + 0.7 * Math.min(1, Math.max(0, (d - 0.25) / 0.6));
-          var a = Math.pow(1 - k / c.len, 1.6) * 0.85 * fade;
-          if (k === 0) { leaf(x, yy + FS / 2, i, 0.95 * fade); continue; }
-          var w = c.word && k >= 3;
-          cx.fillStyle = w ? 'rgba(6,95,70,' + Math.min(1, a * 1.5 + 0.25 * fade) + ')' : k < 3 ? 'rgba(21,128,61,' + a + ')' : 'rgba(34,197,94,' + a + ')';
-          cx.fillText(c.ch[k], x, yy);
-        }
-      }
-    }
-    return {
-      start: function () { this.stop(); size(); last = performance.now(); raf = requestAnimationFrame(frame); },
-      stop: function () { if (raf) cancelAnimationFrame(raf); raf = 0; cx.clearRect(0, 0, cv.width, cv.height); },
-      resize: function () { if (raf) size(); }
-    };
-  })();
-
-  window.addEventListener('resize', function () { Ribbons.resize(); Rain.resize(); });
+  window.addEventListener('resize', function () { Ribbons.resize(); });
   Ribbons.start('ambient');
 
   (function fireflies() {
@@ -707,7 +649,7 @@ button{font-family:inherit}
     $('launchFill').style.width = '0%'; $('launchPct').textContent = '0';
     var p = 0;
     setStage('reveal');
-    Ribbons.start('reveal'); Rain.start();
+    Ribbons.start('reveal');
     timers.launch = setInterval(function () {
       p = Math.min(100, p + 0.9);
       $('launchFill').style.width = p + '%';
@@ -721,7 +663,7 @@ button{font-family:inherit}
   }
 
   function reset() {
-    clearAll(); Ribbons.start('ambient'); Rain.stop();
+    clearAll(); Ribbons.start('ambient');
     progress = 0; $('scanPct').textContent = '0'; demo = false; app.setAttribute('data-demo', '0');
     setStage('idle');
   }
