@@ -148,10 +148,39 @@ button{font-family:inherit}
 @supports (width:min(1px,2px)){.scanner{--s:min(64vh,92vw,720px)}}
 @supports not (inset:0){.disc::after{top:0;right:0;bottom:0;left:0}}
 .nogap .row>*{margin:5px}.nogap .center>*+*{margin-top:2.6vh}.nogap .bar>*+*{margin-left:14px}.nogap .denied>*+*{margin-top:14px}
+
+/* ---- video backgrounds (before = waiting + scan, after = launch). ?scene brings the old painted scene back, ?ribbons the silk ribbons ---- */
+#app{background:#02140a}
+#vbg{position:absolute;top:0;left:0;right:0;bottom:0;overflow:hidden;background:#02140a}
+#vbg video{position:absolute;top:0;left:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .7s ease}
+[data-stage=idle] #vLoop,[data-stage=starting] #vLoop,[data-stage=position] #vLoop,[data-stage=denied] #vLoop{opacity:1}
+[data-stage=scanning] #vScan,[data-stage=granted] #vScan{opacity:1}
+[data-stage=energy] #vAfter,[data-stage=reveal] #vAfter{opacity:1}
+html:not(.oldscene) svg.abs,html:not(.oldscene) #fireflies,html:not(.oldscene) .forest,html:not(.oldscene) .scape,html:not(.oldscene) .skyline,html:not(.oldscene) .hills,html:not(.oldscene) #silk{display:none!important}
+html:not(.oldscene) #reveal .logo{display:none}
+html:not(.oldscene) #scene{padding:0 4vw}
+html:not(.oldscene) .scanner{--s:58vh}
+@supports (width:min(1px,2px)){html:not(.oldscene) .scanner{--s:min(58vh,90vw,640px)}}
+html:not(.oldscene) #reveal::after{content:"";position:absolute;left:0;right:0;bottom:0;height:26vh;background:linear-gradient(rgba(0,0,0,0),rgba(0,12,6,.72));pointer-events:none}
+html:not(.oldscene) #reveal .center{z-index:2;justify-content:flex-end;padding-bottom:3.5vh;gap:1vh}
+html:not(.oldscene) #reveal .title{font-size:20px;font-size:clamp(15px,1.9vw,28px)}
+html:not(.oldscene) #reveal .note{font-size:14px;font-size:clamp(12px,1.1vw,17px)}
+html:not(.oldscene) #reveal .title{color:#fff;text-shadow:0 2px 14px rgba(0,0,0,.65)}
+html:not(.oldscene) #reveal .note{color:#E8FFF0;text-shadow:0 2px 10px rgba(0,0,0,.65)}
+html:not(.oldscene) #reveal .bar .track{background:rgba(0,0,0,.35);box-shadow:0 0 0 1px rgba(255,255,255,.35)}
+html:not(.oldscene) #reveal .bar .pct{color:#fff;text-shadow:0 2px 8px rgba(0,0,0,.6)}
+html:not(.oldscene) #enableHint,html:not(.oldscene) .denied{color:#E8FFF0}
+html:not(.oldscene) .denied h2,html:not(.oldscene) .denied p{color:#E8FFF0}
 </style>
 </head>
 <body>
 <div id="app" data-stage="idle" data-demo="0">
+
+<div id="vbg" aria-hidden="true">
+<video id="vLoop" src="video/before-loop.mp4" muted loop playsinline preload="auto"></video>
+<video id="vScan" src="video/before-scan.mp4" muted playsinline preload="auto"></video>
+<video id="vAfter" src="video/after.mp4" muted playsinline preload="auto"></video>
+</div>
 
 <section id="silk" class="layer" aria-hidden="true">
 <div class="stripes"></div>
@@ -240,6 +269,7 @@ button{font-family:inherit}
   (function () { var m = location.search.match(/[?&]snd=([^&]+)/); if (m) m[1].split(',').forEach(function (kv) { var a = kv.split(':'); if (a[0] in SND && !isNaN(+a[1])) SND[a[0]] = Math.max(0, +a[1]); }); })();
   var CFG = {
     holdMs: 300,        // a face must be present this long before the scan starts
+    energyMs: 5000,     // how long the "after" video plays before the launch title and bar appear (its burst lasts about 5 s)
     launchMs: 2800,     // how long the "Launching Mobile LCDA" percentage bar takes to fill (was about 5600)
     scanMs: 2500,       // scan duration (only advances while a face is present)
     presentMs: 900,     // a face counts as present for this long after it was last seen
@@ -274,7 +304,22 @@ button{font-family:inherit}
 
   /* ---------- helpers ---------- */
   function rnd(n) { var x = Math.sin(n * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
-  function setStage(s) { stage = s; app.setAttribute('data-stage', s); }
+  var OLDSCENE = /[?&]scene\b/.test(location.search), RIBBONS = OLDSCENE || /[?&]ribbons\b/.test(location.search);
+  if (OLDSCENE) document.documentElement.className += ' oldscene';
+  var Vid = (function () {
+    var L = $('vLoop'), S = $('vScan'), A = $('vAfter'), park = 0;
+    function go(v, t) { try { if (t != null) v.currentTime = t; } catch (e) {} try { var p = v.play(); if (p && p.catch) p.catch(function () {}); } catch (e) {} }
+    function rest(v) { try { v.pause(); v.currentTime = 0; } catch (e) {} }
+    return {
+      stage: function (st) {
+        clearTimeout(park);
+        if (st === 'idle' || st === 'starting' || st === 'position' || st === 'denied') { go(L); park = setTimeout(function () { rest(S); rest(A); }, 900); }
+        else if (st === 'scanning') { go(S, 0); park = setTimeout(function () { L.pause(); }, 900); }
+        else if (st === 'energy') { go(A, 0); park = setTimeout(function () { L.pause(); S.pause(); }, 900); }
+      }
+    };
+  })();
+  function setStage(s) { var prev = stage; stage = s; app.setAttribute('data-stage', s); if (s !== prev) Vid.stage(s); }
   function clearT(k) { if (timers[k]) { clearInterval(timers[k]); clearTimeout(timers[k]); timers[k] = null; } }
   function clearAll() { Object.keys(timers).forEach(clearT); }
   function el(tag, cls, style, ns) {
@@ -503,7 +548,7 @@ button{font-family:inherit}
       raf = requestAnimationFrame(frame);
     }
     return {
-      start: function (m) { mode = m; t0 = last = performance.now(); resize(); if (!raf) raf = requestAnimationFrame(frame); },
+      start: function (m) { if (!RIBBONS) return; mode = m; t0 = last = performance.now(); resize(); if (!raf) raf = requestAnimationFrame(frame); },
       resize: resize,
       stop: function () { if (raf) cancelAnimationFrame(raf); raf = 0; }
     };
@@ -816,7 +861,7 @@ button{font-family:inherit}
   function startEnergy() {
     setStage('energy');
     Ribbons.start('energy');
-    timers.next = setTimeout(startReveal, 3600);
+    timers.next = setTimeout(startReveal, CFG.energyMs);            // the "after" video's light burst; the launch title and bar come in as the LCDA logo forms
   }
 
   function startReveal() {
